@@ -148,6 +148,38 @@
   .progress { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
   .flow-scroll { flex: 1; overflow: auto; padding: 40px 32px 60px; }
 
+  .heads-up {
+    display: none;
+    margin: 14px 24px 0;
+    padding: 12px 16px;
+    background: rgba(254, 243, 199, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(217, 119, 6, 0.4);
+    border-left: 4px solid var(--amber);
+    border-radius: 8px;
+    align-items: center;
+    gap: 12px;
+    color: #78350f;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .heads-up.visible { display: flex; }
+  .heads-up-icon {
+    width: 26px;
+    height: 26px;
+    border-radius: 999px;
+    background: var(--amber);
+    color: white;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+  .heads-up-content strong { color: #92400e; }
+
   .badge {
     display: inline-block;
     padding: 2px 7px; border-radius: 4px;
@@ -622,6 +654,10 @@
       </div>
       <div class="progress" id="progress"></div>
     </header>
+    <div class="heads-up" id="heads-up">
+      <div class="heads-up-icon">!</div>
+      <div class="heads-up-content"><strong>Heads up:</strong> <span id="heads-up-text"></span></div>
+    </div>
     <div class="flow-scroll">
       <div id="flow-posm" class="flow"></div>
       <div id="flow-ocr" class="flow"></div>
@@ -636,6 +672,7 @@ const flows = {
     title: "POSM SDK",
     subtitle: "Hybrid-init · Offline-first · Callback-based",
     userSubtitle: "User Flow — what the user sees and does",
+    headsUp: "Before integrating the POSM SDK, the hardcoded JSON data needs to be fetched from the API.",
     steps: [
       { id: 'start', type: 'start', owner: 'host', title: 'START', detail: 'Host app launches POSM session for an outlet visit. Pure host lifecycle event.' },
       { id: 'init', type: 'setup', owner: 'sdk', label: 'Initialization', title: 'initializeSDK(baseUrl, apiKey)', detail: 'SDK stores config and prepares local DB. Called once at startup before any other function.' },
@@ -979,6 +1016,18 @@ function updateActiveHeader() {
   const flow = flows[active];
   document.getElementById('active-title').textContent = flow.title;
   document.getElementById('active-subtitle').textContent = currentView === 'user' ? flow.userSubtitle : flow.subtitle;
+  updateHeadsUp(flow);
+}
+
+function updateHeadsUp(flow) {
+  const banner = document.getElementById('heads-up');
+  const text = document.getElementById('heads-up-text');
+  if (flow.headsUp) {
+    text.textContent = flow.headsUp;
+    banner.classList.add('visible');
+  } else {
+    banner.classList.remove('visible');
+  }
 }
 
 function resetScroll() {
