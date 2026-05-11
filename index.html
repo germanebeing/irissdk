@@ -316,45 +316,156 @@
   .node[data-type="wait"] .node-card { border-left: 3px solid #f59e0b; background: rgba(255, 251, 235, 0.96); }
   .node[data-type="feedback"] .node-card { border-left: 3px solid #a855f7; background: rgba(250, 245, 255, 0.96); }
 
-  /* Decision */
-  .decision {
-    width: 200px; opacity: 0; transform: translateY(-4px);
+  /* Decision — full-width vertical block with YES/NO lanes */
+  .decision-row {
+    width: 100%;
+    padding: 8px 0;
+    display: flex;
+    justify-content: center;
+  }
+  .decision-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    width: 100%;
+    max-width: 900px;
+    opacity: 0;
+    transform: translateY(-4px);
     transition: opacity 0.3s ease, transform 0.3s ease;
     pointer-events: none;
   }
-  .decision.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
-  .decision-card {
+  .decision-block.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+  .decision-card-large {
     background: rgba(255, 255, 255, 0.96);
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    color: var(--text);
-    border: 1.5px solid var(--amber);
-    padding: 14px 16px; border-radius: 10px;
-    text-align: center; font-weight: 600;
-    cursor: pointer; min-height: 110px;
-    display: flex; flex-direction: column;
-    justify-content: center; gap: 6px;
+    border: 2px solid var(--amber);
+    border-radius: 12px;
+    padding: 14px 22px;
+    min-width: 220px;
+    max-width: 320px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    cursor: pointer;
+    position: relative;
+    box-shadow: 0 4px 16px rgba(217, 119, 6, 0.18);
     transition: all 0.15s ease;
   }
-  .decision-card:hover { background: #fffbeb; }
-  .decision-card .q { font-size: 13px; color: var(--amber); }
-  .decision-card .hint { font-size: 10px; font-weight: 400; color: var(--muted); }
+  .decision-card-large:hover { background: #fffbeb; }
+  .decision-card-large .decision-q {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--amber);
+    letter-spacing: 0.3px;
+  }
+  .decision-card-large .decision-hint {
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--muted);
+  }
+  .decision-card-large .decision-arrow-down {
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--amber);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    font-size: 14px;
+    background: white;
+    border: 1.5px solid var(--amber);
+    border-radius: 999px;
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+  .decision-block.expanded .decision-card-large .decision-arrow-down { opacity: 1; }
 
-  .branches-wrap {
-    display: flex; flex-direction: column; gap: 16px;
-    opacity: 0; max-height: 0; overflow: hidden;
-    transition: opacity 0.35s ease, max-height 0.4s ease;
+  .branches-2col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    width: 100%;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: opacity 0.4s ease, max-height 0.5s ease;
     pointer-events: none;
   }
-  .branches-wrap.visible { opacity: 1; max-height: 1200px; pointer-events: auto; }
-  .branch { display: flex; align-items: flex-start; gap: 0; position: relative; }
-  .branch-label-wrap { display: flex; align-items: center; margin: 50px 8px 0 0; }
-  .branch-label {
-    font-size: 9px; font-weight: 700; color: white;
-    padding: 3px 8px; border-radius: 4px; letter-spacing: 0.5px;
+  .branches-2col.visible {
+    opacity: 1;
+    max-height: 3000px;
+    pointer-events: auto;
   }
-  .branch.yes .branch-label { background: var(--green); }
-  .branch.no .branch-label { background: var(--red); }
+
+  .branch-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 18px 14px 16px;
+    border-radius: 14px;
+    position: relative;
+  }
+  .branch-column.yes {
+    background: rgba(16, 185, 129, 0.07);
+    border: 1px dashed rgba(16, 185, 129, 0.35);
+  }
+  .branch-column.no {
+    background: rgba(220, 38, 38, 0.07);
+    border: 1px dashed rgba(220, 38, 38, 0.35);
+  }
+  .branch-banner {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.6px;
+    padding: 6px 18px;
+    border-radius: 999px;
+    color: white;
+    display: inline-block;
+  }
+  .branch-banner.yes { background: var(--green); box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3); }
+  .branch-banner.no { background: var(--red); box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3); }
+
+  /* Cards inside branch columns: full-width within the column, no snake-arrows */
+  .branch-column .node { width: 100%; max-width: 320px; }
+  .branch-column .flow-item::after,
+  .branch-column .flow-item::before { display: none !important; }
+
+  /* Nested decision block inside a branch column */
+  .branch-column .decision-block {
+    gap: 14px;
+    max-width: 100%;
+  }
+  .branch-column .decision-card-large {
+    min-width: 180px;
+    max-width: 260px;
+    padding: 12px 16px;
+  }
+  .branch-column .decision-card-large .decision-q { font-size: 13px; }
+  .branch-column .branches-2col {
+    gap: 12px;
+  }
+  .branch-column .branch-column {
+    padding: 12px 10px;
+    gap: 10px;
+  }
+  .branch-column .branch-banner {
+    font-size: 10px;
+    padding: 4px 12px;
+    letter-spacing: 1.3px;
+  }
 
   @media (max-width: 760px) {
     .app { flex-direction: column; }
@@ -695,7 +806,9 @@ function ownerBadge(owner) {
 }
 
 function buildNode(step) {
-  if (step.type === 'decision') return buildDecision(step);
+  // Top-level decisions are rendered separately in renderFlow.
+  // buildNode is for regular steps only (and is called recursively from buildDecision for branch children).
+  if (step.type === 'decision') return buildDecision(step, { nested: true });
 
   const node = document.createElement('div');
   node.className = 'node flow-item';
@@ -724,54 +837,55 @@ function buildNode(step) {
   return node;
 }
 
-function buildDecision(step) {
-  const wrap = document.createElement('div');
-  wrap.className = 'decision-group flow-item';
-  wrap.style.display = 'flex';
-  wrap.style.flexDirection = 'column';
-  wrap.style.gap = '12px';
-
-  const decision = document.createElement('div');
-  decision.className = 'decision';
-  decision.dataset.id = step.id;
+function buildDecision(step, opts) {
+  opts = opts || {};
+  const block = document.createElement('div');
+  block.className = 'decision-block' + (opts.nested ? ' nested' : ' flow-item');
+  block.dataset.id = step.id;
 
   const card = document.createElement('div');
-  card.className = 'decision-card';
-  card.innerHTML = '<div class="q">' + step.question + '</div><div class="hint">' + (step.hint || '') + '</div>' + ownerBadge(step.owner || 'sdk');
-  decision.appendChild(card);
-  wrap.appendChild(decision);
+  card.className = 'decision-card-large';
+  card.innerHTML =
+    '<div class="decision-q">' + step.question + '</div>' +
+    '<div class="decision-hint">' + (step.hint || '') + '</div>' +
+    '<div>' + ownerBadge(step.owner || 'sdk') + '</div>' +
+    '<div class="decision-arrow-down">▾</div>';
+  block.appendChild(card);
 
   const branchesWrap = document.createElement('div');
-  branchesWrap.className = 'branches-wrap';
+  branchesWrap.className = 'branches-2col';
 
   ['yes', 'no'].forEach(side => {
     if (!step.branches[side]) return;
-    const branch = document.createElement('div');
-    branch.className = 'branch ' + side;
+    const column = document.createElement('div');
+    column.className = 'branch-column ' + side;
 
-    const labelWrap = document.createElement('div');
-    labelWrap.className = 'branch-label-wrap';
-    labelWrap.innerHTML = '<span class="branch-label">' + side.toUpperCase() + '</span>';
-    branch.appendChild(labelWrap);
+    const banner = document.createElement('div');
+    banner.className = 'branch-banner ' + side;
+    banner.textContent = side.toUpperCase();
+    column.appendChild(banner);
 
-    step.branches[side].forEach((child, i) => {
-      if (i > 0) {
-        const conn = document.createElement('div');
-        conn.className = 'connector visible';
-        branch.appendChild(conn);
+    step.branches[side].forEach(child => {
+      let childEl;
+      if (child.type === 'decision') {
+        childEl = buildDecision(child, { nested: true });
+        childEl.classList.add('visible');
+        if (childEl._branchesWrap) childEl._branchesWrap.classList.add('visible');
+        if (childEl._cardEl) childEl._cardEl.classList.add('auto-expanded');
+      } else {
+        childEl = buildNode(child);
+        childEl.classList.add('visible');
       }
-      const childEl = buildNode(child);
-      childEl.classList.add('visible');
-      branch.appendChild(childEl);
+      column.appendChild(childEl);
     });
 
-    branchesWrap.appendChild(branch);
+    branchesWrap.appendChild(column);
   });
 
-  wrap.appendChild(branchesWrap);
-  wrap._decisionEl = decision;
-  wrap._branchesWrap = branchesWrap;
-  return wrap;
+  block.appendChild(branchesWrap);
+  block._cardEl = card;
+  block._branchesWrap = branchesWrap;
+  return block;
 }
 
 function getStepsPerRow() {
@@ -817,32 +931,49 @@ function renderFlow(key) {
 
   let row = null;
   let rowIdx = 0;
-  stepList.forEach((step, i) => {
-    if (i % perRow === 0) {
-      if (i > 0) {
-        const turn = document.createElement('div');
-        const finishedWasLtr = ((rowIdx - 1) % 2 === 0);
-        turn.className = 'row-turn ' + (finishedWasLtr ? 'right' : 'left');
-        turn.appendChild(makeTurnSvg(finishedWasLtr ? 'right' : 'left'));
-        root.appendChild(turn);
+  let stepsInRow = 0;
+
+  function startSnakeRow() {
+    const isRtl = rowIdx % 2 === 1;
+    row = document.createElement('div');
+    row.className = 'flow-row ' + (isRtl ? 'rtl' : 'ltr');
+    root.appendChild(row);
+    rowIdx++;
+    stepsInRow = 0;
+  }
+
+  function addUTurn() {
+    const finishedWasLtr = ((rowIdx - 1) % 2 === 0);
+    const turn = document.createElement('div');
+    turn.className = 'row-turn ' + (finishedWasLtr ? 'right' : 'left');
+    turn.appendChild(makeTurnSvg(finishedWasLtr ? 'right' : 'left'));
+    root.appendChild(turn);
+  }
+
+  stepList.forEach(step => {
+    if (step.type === 'decision') {
+      // Decision becomes its own full-width row, breaking the snake.
+      row = null;
+      stepsInRow = 0;
+      rowIdx = 0;
+
+      const decisionRow = document.createElement('div');
+      decisionRow.className = 'decision-row';
+      decisionRow.appendChild(buildDecision(step));
+      root.appendChild(decisionRow);
+    } else {
+      if (!row || stepsInRow >= perRow) {
+        if (row && stepsInRow > 0) addUTurn();
+        startSnakeRow();
       }
-      row = document.createElement('div');
-      const isRtl = rowIdx % 2 === 1;
-      row.className = 'flow-row ' + (isRtl ? 'rtl' : 'ltr');
-      root.appendChild(row);
-      rowIdx++;
+      row.appendChild(buildNode(step));
+      stepsInRow++;
     }
-    const el = buildNode(step);
-    row.appendChild(el);
   });
 
+  // Reveal first flow-item (the first .node in row 1, or first decision-block)
   const firstFlowItem = root.querySelector('.flow-item');
-  if (firstFlowItem) {
-    firstFlowItem.classList.add('visible');
-    if (firstFlowItem.classList.contains('decision-group')) {
-      firstFlowItem._decisionEl.classList.add('visible');
-    }
-  }
+  if (firstFlowItem) firstFlowItem.classList.add('visible');
 
   attachHandlers(root);
   updateActiveHeader();
@@ -858,37 +989,66 @@ function attachHandlers(root) {
       updateProgress();
     });
   });
-  root.querySelectorAll('.decision-group').forEach(group => {
-    const decision = group._decisionEl;
-    const branches = group._branchesWrap;
-    decision.querySelector('.decision-card').addEventListener('click', () => {
+  // Top-level decision-blocks (.flow-item)
+  root.querySelectorAll('.decision-block.flow-item').forEach(block => {
+    const card = block._cardEl;
+    const branches = block._branchesWrap;
+    card.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const opening = !branches.classList.contains('visible');
       branches.classList.toggle('visible');
-      revealNext(group);
+      block.classList.toggle('expanded', opening);
+      if (opening) revealNext(block, { scroll: false });
       updateProgress();
+    });
+  });
+  // Nested decision-blocks (inside a branch column) — toggle locally, don't trigger main-flow reveal
+  root.querySelectorAll('.decision-block.nested').forEach(block => {
+    const card = block._cardEl;
+    const branches = block._branchesWrap;
+    if (card._wired) return;
+    card._wired = true;
+    card.addEventListener('click', (e) => {
+      e.stopPropagation();
+      branches.classList.toggle('visible');
+      block.classList.toggle('expanded');
     });
   });
 }
 
-function revealNext(currentItem) {
-  let sib = currentItem.nextElementSibling;
-  while (sib && !sib.classList.contains('flow-item')) sib = sib.nextElementSibling;
-
-  if (!sib) {
-    const row = currentItem.closest('.flow-row');
-    if (row) {
-      let walker = row.nextElementSibling;
-      while (walker && !walker.classList.contains('flow-row')) {
-        if (walker.classList.contains('row-turn')) walker.classList.add('visible');
-        walker = walker.nextElementSibling;
-      }
-      if (walker) sib = walker.querySelector('.flow-item');
+function getTopLevelItems(root) {
+  const items = [];
+  Array.from(root.children).forEach(child => {
+    if (child.classList.contains('flow-row')) {
+      Array.from(child.children).forEach(c => {
+        if (c.classList && c.classList.contains('flow-item')) items.push(c);
+      });
+    } else if (child.classList.contains('decision-row')) {
+      const block = child.querySelector(':scope > .flow-item');
+      if (block) items.push(block);
     }
+  });
+  return items;
+}
+
+function revealNext(currentItem, opts) {
+  opts = opts || {};
+  const root = currentItem.closest('.flow');
+  if (!root) return;
+  const items = getTopLevelItems(root);
+  const idx = items.indexOf(currentItem);
+  if (idx < 0 || idx >= items.length - 1) return;
+  const next = items[idx + 1];
+
+  // Reveal any row-turn elements between current's parent and next's parent
+  let walker = currentItem.parentElement.nextElementSibling;
+  while (walker && walker !== next.parentElement) {
+    if (walker.classList.contains('row-turn')) walker.classList.add('visible');
+    walker = walker.nextElementSibling;
   }
 
-  if (!sib) return;
-  sib.classList.add('visible');
-  if (sib.classList.contains('decision-group')) sib._decisionEl.classList.add('visible');
-  scrollIntoFlowView(sib);
+  next.classList.add('visible');
+  if (opts.scroll !== false) scrollIntoFlowView(next);
 }
 
 function scrollIntoFlowView(el) {
@@ -912,18 +1072,10 @@ function scrollIntoFlowView(el) {
 function updateProgress() {
   const active = document.querySelector('.module.active').dataset.flow;
   const root = container[active];
-  const totalNodes = root.querySelectorAll('.node').length;
-  const totalDecisions = root.querySelectorAll('.decision').length;
-  const total = totalNodes + totalDecisions;
+  const items = getTopLevelItems(root);
+  const total = items.length;
   let visible = 0;
-  root.querySelectorAll('.node').forEach(n => {
-    const wrap = n.closest('.branches-wrap');
-    if (wrap && !wrap.classList.contains('visible')) return;
-    if (n.classList.contains('visible')) visible++;
-  });
-  root.querySelectorAll('.decision').forEach(d => {
-    if (d.classList.contains('visible')) visible++;
-  });
+  items.forEach(it => { if (it.classList.contains('visible')) visible++; });
   document.getElementById('progress').textContent = visible + ' / ' + total + ' revealed';
 }
 
@@ -964,8 +1116,9 @@ document.querySelectorAll('.view-toggle button').forEach(btn => {
 document.getElementById('expand-all').addEventListener('click', () => {
   const active = document.querySelector('.module.active').dataset.flow;
   const root = container[active];
-  root.querySelectorAll('.flow-item, .node, .decision, .row-turn').forEach(n => n.classList.add('visible'));
-  root.querySelectorAll('.branches-wrap').forEach(b => b.classList.add('visible'));
+  root.querySelectorAll('.flow-item, .node, .row-turn, .decision-block').forEach(n => n.classList.add('visible'));
+  root.querySelectorAll('.branches-2col').forEach(b => b.classList.add('visible'));
+  root.querySelectorAll('.decision-block').forEach(b => b.classList.add('expanded'));
   root.querySelectorAll('.node-card').forEach(c => c.classList.add('expanded'));
   updateProgress();
   resetScroll();
