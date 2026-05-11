@@ -1,0 +1,1005 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SDK Flow Diagrams — Interactive</title>
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --panel: #ffffff;
+    --panel-2: #f1f5f9;
+    --border: #e2e8f0;
+    --border-strong: #cbd5e1;
+    --text: #0f172a;
+    --muted: #64748b;
+    --accent: #2563eb;
+    --host: #2563eb;
+    --host-bg: #eff6ff;
+    --sdk: #7c3aed;
+    --sdk-bg: #f5f3ff;
+    --green: #16a34a;
+    --red: #dc2626;
+    --amber: #d97706;
+    --sidebar-w: 260px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    height: 100vh;
+    overflow: hidden;
+    position: relative;
+  }
+  body { background: #060d1a; }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background:
+      radial-gradient(55vw 55vw at 6% 8%,   rgba(59, 130, 246, 0.18), transparent 60%),
+      radial-gradient(55vw 55vw at 94% 94%, rgba(139, 92, 246, 0.14), transparent 60%),
+      radial-gradient(45vw 45vw at 60% 40%, rgba(56, 189, 248, 0.10), transparent 65%);
+  }
+  .bg-circuit {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+    opacity: 0.85;
+  }
+  .app { display: flex; height: 100vh; position: relative; z-index: 1; }
+
+  .sidebar {
+    width: var(--sidebar-w);
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border-right: 1px solid var(--border);
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar-header { padding: 18px 18px 14px; border-bottom: 1px solid var(--border); }
+  .sidebar-header h1 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
+  .sidebar-header p { margin: 0; color: var(--muted); font-size: 11px; }
+  .sidebar-section { padding: 12px; border-bottom: 1px solid var(--border); }
+  .sidebar-section h3 {
+    margin: 0 0 8px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--muted);
+    font-weight: 600;
+    padding: 0 6px;
+  }
+
+  .modules { display: flex; flex-direction: column; gap: 2px; }
+  .module {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid transparent;
+    padding: 10px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 13px;
+    text-align: left;
+    transition: all 0.15s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-family: inherit;
+  }
+  .module:hover { background: var(--panel-2); }
+  .module.active { background: var(--host-bg); border-color: #bfdbfe; }
+  .module strong { font-size: 13px; font-weight: 600; color: var(--text); }
+  .module .module-sub { font-size: 11px; color: var(--muted); }
+  .module .module-count { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  .view-toggle { display: flex; background: var(--panel-2); border-radius: 6px; padding: 2px; }
+  .view-toggle button {
+    flex: 1; background: transparent; border: none; color: var(--muted);
+    padding: 6px 10px; border-radius: 4px; cursor: pointer;
+    font-size: 12px; font-weight: 500; font-family: inherit;
+    transition: all 0.15s ease;
+  }
+  .view-toggle button.active {
+    background: white; color: var(--text);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+  }
+
+  .controls { display: flex; flex-direction: column; gap: 6px; }
+  .controls button {
+    background: var(--panel); color: var(--text); border: 1px solid var(--border);
+    padding: 7px 10px; border-radius: 6px; cursor: pointer; font-size: 12px;
+    font-family: inherit; text-align: left; transition: all 0.15s ease;
+  }
+  .controls button:hover { border-color: var(--accent); color: var(--accent); }
+
+  .legend { display: flex; flex-direction: column; gap: 8px; padding: 0 6px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--muted); }
+  .badge-swatch { width: 14px; height: 14px; border-radius: 3px; border: 1px solid; flex-shrink: 0; }
+  .badge-swatch.host { background: var(--host-bg); border-color: #bfdbfe; }
+  .badge-swatch.sdk  { background: var(--sdk-bg);  border-color: #ddd6fe; }
+  .badge-swatch.returns { background: #ecfdf5; border-color: #a7f3d0; }
+
+  .main { flex: 1; overflow: auto; display: flex; flex-direction: column; background: transparent; }
+  .main-header {
+    padding: 18px 24px 12px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+  .main-header h2 { margin: 0 0 2px; font-size: 18px; font-weight: 600; }
+  .main-header p { margin: 0; color: var(--muted); font-size: 12px; }
+  .progress { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+  .flow-scroll { flex: 1; overflow: auto; padding: 40px 32px 60px; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 7px; border-radius: 4px;
+    font-size: 9px; font-weight: 700;
+    letter-spacing: 0.6px; text-transform: uppercase;
+    border: 1px solid;
+  }
+  .badge.host { color: var(--host); background: var(--host-bg); border-color: #bfdbfe; }
+  .badge.sdk  { color: var(--sdk);  background: var(--sdk-bg);  border-color: #ddd6fe; }
+
+  .returns-pill {
+    display: inline-flex; align-items: center; gap: 3px;
+    background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;
+    padding: 2px 6px; border-radius: 4px;
+    font-size: 9px; font-weight: 600;
+    letter-spacing: 0.3px; text-transform: uppercase;
+  }
+  .returns-pill::before { content: "↩"; font-size: 12px; line-height: 1; }
+
+  /* Snake flow */
+  .flow { display: none; flex-direction: column; gap: 40px; padding-bottom: 30px; }
+  .flow.active { display: flex; }
+  .flow-row { display: flex; gap: 30px; align-items: flex-start; position: relative; }
+  .flow-row.rtl { flex-direction: row-reverse; }
+
+  .flow-item { flex-shrink: 0; position: relative; }
+  .flow-item::after {
+    content: ''; position: absolute;
+    top: 54px; right: -22px;
+    width: 16px; height: 0;
+    border-top: 2px solid rgba(148, 163, 184, 0.65);
+    opacity: 0; transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+  .flow-item::before {
+    content: ''; position: absolute;
+    top: 50px; right: -22px;
+    border-left: 7px solid rgba(148, 163, 184, 0.65);
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    opacity: 0; transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+  .flow-item.visible::after, .flow-item.visible::before { opacity: 1; }
+  .flow-row.rtl .flow-item::after { right: auto; left: -22px; }
+  .flow-row.rtl .flow-item::before {
+    right: auto; left: -22px;
+    border-left: none;
+    border-right: 7px solid rgba(148, 163, 184, 0.65);
+  }
+  .flow-row .flow-item:last-child::after,
+  .flow-row .flow-item:last-child::before { display: none; }
+
+  .row-turn {
+    width: 100%; height: 0; position: relative; pointer-events: none;
+    opacity: 0; transition: opacity 0.3s ease;
+  }
+  .row-turn.visible { opacity: 1; }
+  .row-turn svg {
+    position: absolute; top: -34px;
+    width: 60px; height: 80px; overflow: visible;
+  }
+  .row-turn.right svg { right: 88px; }
+  .row-turn.left svg { left: 88px; }
+
+  /* Node card */
+  .node {
+    width: 240px; opacity: 0; transform: translateY(-4px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+  }
+  .node.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .node-card {
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    min-height: 110px;
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .node-card:hover { border-color: var(--border-strong); box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+  .node-card.expanded { border-color: var(--accent); box-shadow: 0 2px 12px rgba(37, 99, 235, 0.1); }
+  .node-header {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 6px; flex-wrap: wrap;
+  }
+  .node-label {
+    font-size: 9px; text-transform: uppercase; letter-spacing: 1.1px;
+    color: var(--muted); font-weight: 600;
+  }
+  .node-title {
+    font-family: "SF Mono", Menlo, Consolas, monospace;
+    font-size: 12px; color: var(--text); font-weight: 600;
+    line-height: 1.4; word-break: break-word;
+  }
+  .node[data-type="start"] .node-title,
+  .node[data-type="end"] .node-title {
+    font-family: inherit; text-align: center;
+  }
+  .node-detail {
+    max-height: 0; overflow: hidden;
+    transition: max-height 0.35s ease, margin-top 0.35s ease, padding-top 0.35s ease;
+    color: var(--muted); font-size: 12px; line-height: 1.55;
+  }
+  .node-card.expanded .node-detail {
+    max-height: 600px; margin-top: 8px; padding-top: 8px;
+    border-top: 1px dashed var(--border);
+  }
+  .callback-tag {
+    display: inline-block;
+    background: var(--sdk-bg); color: var(--sdk);
+    border: 1px solid #ddd6fe;
+    padding: 3px 7px; border-radius: 4px;
+    font-size: 10px; margin-top: 6px;
+    font-family: "SF Mono", Menlo, monospace;
+  }
+  .callback-tag::before {
+    content: "SDK → Host: ";
+    color: #475569; font-weight: 700; letter-spacing: 0.3px;
+  }
+  .behind-the-scenes {
+    margin-top: 8px; padding: 6px 8px;
+    background: #f8fafc; border: 1px dashed var(--border);
+    border-radius: 6px;
+    font-size: 10px; color: var(--muted);
+    font-family: "SF Mono", Menlo, monospace; line-height: 1.5;
+  }
+  .behind-the-scenes::before {
+    content: "Behind the scenes: ";
+    color: var(--sdk); font-weight: 700;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  .click-hint {
+    display: inline-block; font-size: 9px; color: var(--accent);
+    margin-left: 4px; animation: pulse 1.8s infinite;
+  }
+  .node-card.expanded .click-hint { display: none; }
+  @keyframes pulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+
+  .node[data-type="start"] .node-card,
+  .node[data-type="end"] .node-card {
+    background: var(--text); color: white;
+    border-radius: 12px; text-align: center;
+    justify-content: center; min-height: 110px;
+  }
+  .node[data-type="start"] .node-title,
+  .node[data-type="end"] .node-title { color: white; }
+  .node[data-type="start"] .node-detail,
+  .node[data-type="end"] .node-detail { color: rgba(255,255,255,0.85); }
+  .node[data-type="start"] .node-header,
+  .node[data-type="end"] .node-header { justify-content: center; }
+
+  .node[data-type="setup"] .node-card { border-left: 3px solid #14b8a6; }
+  .node[data-type="capture"] .node-card { border-left: 3px solid #f59e0b; }
+  .node[data-type="ocr"] .node-card { border-left: 3px solid #3b82f6; }
+  .node[data-type="validate"] .node-card { border-left: 3px solid #8b5cf6; }
+  .node[data-type="sync"] .node-card { border-left: 3px solid #eab308; }
+  .node[data-type="api"] .node-card { border-left: 3px solid #64748b; background: rgba(248, 250, 252, 0.96); }
+  .node[data-type="fail"] .node-card { border-left: 3px solid var(--red); background: rgba(254, 242, 242, 0.96); }
+  .node[data-type="screen"] .node-card { border-left: 3px solid #38bdf8; background: rgba(240, 249, 255, 0.96); }
+  .node[data-type="action"] .node-card { border-left: 3px solid #10b981; background: rgba(240, 253, 244, 0.96); }
+  .node[data-type="wait"] .node-card { border-left: 3px solid #f59e0b; background: rgba(255, 251, 235, 0.96); }
+  .node[data-type="feedback"] .node-card { border-left: 3px solid #a855f7; background: rgba(250, 245, 255, 0.96); }
+
+  /* Decision */
+  .decision {
+    width: 200px; opacity: 0; transform: translateY(-4px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    pointer-events: none;
+  }
+  .decision.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+  .decision-card {
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: var(--text);
+    border: 1.5px solid var(--amber);
+    padding: 14px 16px; border-radius: 10px;
+    text-align: center; font-weight: 600;
+    cursor: pointer; min-height: 110px;
+    display: flex; flex-direction: column;
+    justify-content: center; gap: 6px;
+    transition: all 0.15s ease;
+  }
+  .decision-card:hover { background: #fffbeb; }
+  .decision-card .q { font-size: 13px; color: var(--amber); }
+  .decision-card .hint { font-size: 10px; font-weight: 400; color: var(--muted); }
+
+  .branches-wrap {
+    display: flex; flex-direction: column; gap: 16px;
+    opacity: 0; max-height: 0; overflow: hidden;
+    transition: opacity 0.35s ease, max-height 0.4s ease;
+    pointer-events: none;
+  }
+  .branches-wrap.visible { opacity: 1; max-height: 1200px; pointer-events: auto; }
+  .branch { display: flex; align-items: flex-start; gap: 0; position: relative; }
+  .branch-label-wrap { display: flex; align-items: center; margin: 50px 8px 0 0; }
+  .branch-label {
+    font-size: 9px; font-weight: 700; color: white;
+    padding: 3px 8px; border-radius: 4px; letter-spacing: 0.5px;
+  }
+  .branch.yes .branch-label { background: var(--green); }
+  .branch.no .branch-label { background: var(--red); }
+
+  @media (max-width: 760px) {
+    .app { flex-direction: column; }
+    .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); max-height: 40vh; }
+    .main-header { padding: 12px 16px; }
+    .flow-scroll { padding: 24px 16px 40px; }
+  }
+</style>
+</head>
+<body>
+<svg class="bg-circuit" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <pattern id="circuit-tile" x="0" y="0" width="640" height="420" patternUnits="userSpaceOnUse">
+      <g fill="none" stroke="#1e3a8a" stroke-width="1.2" opacity="0.55">
+        <path d="M 0 60 H 120 q 20 0 20 20 V 180 q 0 20 20 20 H 280 q 20 0 20 20 V 280 q 0 20 -20 20 H 100 q -20 0 -20 20 V 420"/>
+        <path d="M 200 0 V 40 q 0 20 20 20 H 360 q 20 0 20 20 V 180 q 0 20 20 20 H 520"/>
+        <path d="M 640 100 H 520 q -20 0 -20 20 V 260 q 0 20 20 20 H 640"/>
+        <path d="M 380 420 V 340 q 0 -20 20 -20 H 560 q 20 0 20 -20 V 200"/>
+        <path d="M 0 240 H 80 q 20 0 20 -20 V 80 q 0 -20 20 -20 H 280"/>
+        <path d="M 320 0 V 80 q 0 20 -20 20 H 220 q -20 0 -20 20 V 220"/>
+        <path d="M 460 0 V 40 q 0 20 20 20 H 640"/>
+        <path d="M 460 420 V 360 q 0 -20 -20 -20 H 320 q -20 0 -20 -20 V 260"/>
+        <path d="M 60 420 V 380 q 0 -20 20 -20 H 200 q 20 0 20 -20 V 300"/>
+      </g>
+      <g fill="none" stroke="#3b82f6" stroke-width="1.6" opacity="0.75">
+        <path d="M 100 200 H 240 q 20 0 20 -20 V 80 q 0 -20 20 -20 H 360"/>
+        <path d="M 560 300 V 380 q 0 20 -20 20 H 460"/>
+        <path d="M 0 360 H 140"/>
+      </g>
+      <g fill="none" stroke="#60a5fa" stroke-width="1" stroke-dasharray="2 5" opacity="0.5">
+        <path d="M 0 340 H 180"/>
+        <path d="M 380 0 V 100"/>
+        <path d="M 640 380 H 480 q -20 0 -20 -20 V 280"/>
+        <path d="M 160 420 V 320"/>
+        <path d="M 540 60 V 0"/>
+      </g>
+      <g fill="#1e40af">
+        <circle cx="120" cy="60" r="1.6"/>
+        <circle cx="140" cy="80" r="1.6"/>
+        <circle cx="160" cy="200" r="1.6"/>
+        <circle cx="280" cy="200" r="1.6"/>
+        <circle cx="300" cy="220" r="1.6"/>
+        <circle cx="100" cy="300" r="1.6"/>
+        <circle cx="200" cy="40" r="1.6"/>
+        <circle cx="220" cy="60" r="1.6"/>
+        <circle cx="360" cy="60" r="1.6"/>
+        <circle cx="380" cy="80" r="1.6"/>
+        <circle cx="400" cy="200" r="1.6"/>
+        <circle cx="500" cy="120" r="1.6"/>
+        <circle cx="500" cy="260" r="1.6"/>
+        <circle cx="80" cy="240" r="1.6"/>
+        <circle cx="100" cy="220" r="1.6"/>
+        <circle cx="20" cy="280" r="1.6"/>
+        <circle cx="560" cy="200" r="1.6"/>
+        <circle cx="560" cy="280" r="1.6"/>
+        <circle cx="320" cy="80" r="1.6"/>
+        <circle cx="280" cy="100" r="1.6"/>
+        <circle cx="220" cy="120" r="1.6"/>
+        <circle cx="220" cy="280" r="1.6"/>
+        <circle cx="320" cy="280" r="1.6"/>
+        <circle cx="320" cy="320" r="1.6"/>
+        <circle cx="440" cy="340" r="1.6"/>
+        <circle cx="560" cy="320" r="1.6"/>
+        <circle cx="60" cy="380" r="1.6"/>
+        <circle cx="80" cy="360" r="1.6"/>
+        <circle cx="200" cy="320" r="1.6"/>
+        <circle cx="220" cy="300" r="1.6"/>
+        <circle cx="460" cy="40" r="1.6"/>
+        <circle cx="480" cy="60" r="1.6"/>
+      </g>
+      <g>
+        <circle cx="280" cy="60" r="3" fill="#60a5fa" opacity="0.55">
+          <animate attributeName="opacity" values="0.25;0.85;0.25" dur="4.2s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="280" cy="60" r="1.4" fill="#dbeafe"/>
+        <circle cx="520" cy="180" r="3" fill="#38bdf8" opacity="0.55">
+          <animate attributeName="opacity" values="0.3;0.9;0.3" dur="3.6s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="520" cy="180" r="1.4" fill="#e0f2fe"/>
+        <circle cx="100" cy="380" r="3" fill="#3b82f6" opacity="0.55">
+          <animate attributeName="opacity" values="0.2;0.85;0.2" dur="5s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="100" cy="380" r="1.4" fill="#bae6fd"/>
+        <circle cx="380" cy="320" r="3" fill="#60a5fa" opacity="0.55">
+          <animate attributeName="opacity" values="0.3;0.9;0.3" dur="4.6s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="380" cy="320" r="1.4" fill="#e0f2fe"/>
+        <circle cx="200" cy="280" r="3" fill="#38bdf8" opacity="0.55">
+          <animate attributeName="opacity" values="0.2;0.8;0.2" dur="5.4s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="200" cy="280" r="1.4" fill="#bae6fd"/>
+        <circle cx="560" cy="60" r="3" fill="#a855f7" opacity="0.55">
+          <animate attributeName="opacity" values="0.25;0.85;0.25" dur="4s" repeatCount="indefinite"/>
+        </circle>
+        <circle cx="560" cy="60" r="1.4" fill="#f5d0fe"/>
+      </g>
+      <g fill="#60a5fa" opacity="0.7">
+        <path d="M 200 78 l -4 8 l 8 0 z"/>
+        <path d="M 420 218 l 8 4 l 0 -8 z"/>
+        <path d="M 360 358 l 4 -8 l -8 0 z"/>
+        <path d="M 478 178 l -8 -4 l 0 8 z"/>
+        <path d="M 100 338 l 4 8 l -8 0 z"/>
+        <path d="M 540 278 l 0 8 l 8 -4 z"/>
+      </g>
+    </pattern>
+  </defs>
+  <rect width="100%" height="100%" fill="url(#circuit-tile)"/>
+</svg>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>SDK Flow Diagrams</h1>
+      <p>Interactive — click steps to expand</p>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Modules</h3>
+      <div class="modules" id="modules">
+        <button class="module active" data-flow="posm">
+          <strong>POSM SDK</strong>
+          <span class="module-sub">Hybrid-init · Offline-first</span>
+          <span class="module-count" id="count-posm"></span>
+        </button>
+        <button class="module" data-flow="ocr">
+          <strong>OCR Stock SDK</strong>
+          <span class="module-sub">Gate-pass OCR · Offline-capable</span>
+          <span class="module-count" id="count-ocr"></span>
+        </button>
+        <button class="module" data-flow="ir">
+          <strong>IR SDK</strong>
+          <span class="module-sub">Image recognition · Compliance</span>
+          <span class="module-count" id="count-ir"></span>
+        </button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>View</h3>
+      <div class="view-toggle">
+        <button class="active" data-view="sdk">SDK Flow</button>
+        <button data-view="user">User Flow</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Controls</h3>
+      <div class="controls">
+        <button id="expand-all">Reveal all steps</button>
+        <button id="reset">Reset to start</button>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <h3>Legend</h3>
+      <div class="legend">
+        <div class="legend-item"><span class="badge-swatch host"></span>Host — UI, user input, lifecycle</div>
+        <div class="legend-item"><span class="badge-swatch sdk"></span>SDK — internal work</div>
+        <div class="legend-item"><span class="badge-swatch returns"></span>Returns to host (callback)</div>
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="main-header">
+      <div>
+        <h2 id="active-title">POSM SDK</h2>
+        <p id="active-subtitle">Hybrid-init · Offline-first · Callback-based</p>
+      </div>
+      <div class="progress" id="progress"></div>
+    </header>
+    <div class="flow-scroll">
+      <div id="flow-posm" class="flow active"></div>
+      <div id="flow-ocr" class="flow"></div>
+      <div id="flow-ir" class="flow"></div>
+    </div>
+  </main>
+</div>
+
+<script>
+const flows = {
+  posm: {
+    title: "POSM SDK",
+    subtitle: "Hybrid-init · Offline-first · Callback-based",
+    userSubtitle: "User Flow — what the user sees and does",
+    steps: [
+      { id: 'start', type: 'start', owner: 'host', title: 'START', detail: 'Host app launches POSM session for an outlet visit. Pure host lifecycle event.' },
+      { id: 'init', type: 'setup', owner: 'sdk', label: 'Initialization', title: 'initializeSDK(baseUrl, apiKey)', detail: 'SDK stores config and prepares local DB. Called once at startup before any other function.' },
+      { id: 'loadMaster', type: 'setup', owner: 'sdk', label: 'Session · Data', title: 'loadPosmMasterData(...)', detail: 'SDK fetches POSM master config (types, brands, elements, visibility) and caches it locally for offline use.', callback: 'onSuccess(masterData) · onError(err)' },
+      { id: 'getEntries', type: 'setup', owner: 'sdk', label: 'Session · Data', title: 'getPosmEntries(...)', detail: 'SDK reads existing entries for this session from local DB (offline-first).', callback: 'onSuccess([PosmEntry])' },
+      { id: 'getPrev', type: 'setup', owner: 'sdk', label: 'History', title: 'getPreviousVisitPosm(...)', detail: 'SDK fetches POSM from the previous visit. Host displays it side-by-side with current capture.', callback: 'onSuccess(prevPosmList)' },
+      { id: 'renderForm', type: 'capture', owner: 'host', label: 'UI', title: 'Render create/edit form', detail: 'Host renders the entry form, opens dropdowns, captures user input (brand, visibility, element). Pure host UI.' },
+      { id: 'getBrands', type: 'capture', owner: 'sdk', label: 'Dropdown Helpers', title: 'getBrandOptions(...) · getVisibilityOptions(...)', detail: 'SDK returns valid choices from cached master data — no network. Host renders them into dropdowns.' },
+      { id: 'cameraUI', type: 'capture', owner: 'host', label: 'UI', title: 'Open camera · user takes photo', detail: 'Host opens the device camera, displays preview, captures the user shutter tap. SDK is not involved yet.' },
+      { id: 'capture', type: 'capture', owner: 'sdk', label: 'Capture', title: 'capturePosmImage(...)', detail: 'SDK persists the captured image locally with metadata (location, timestamp, POSM type) and returns an imageRef.', callback: 'onSuccess(imageRef) · onProgress(uploadStatus)' },
+      { id: 'create', type: 'capture', owner: 'sdk', label: 'Capture', title: 'createPosmEntry(...)', detail: 'SDK inserts entry in local DB with syncStatus: pending and adds it to the offline sync queue.', callback: 'onSuccess(PosmEntry)' },
+      { id: 'update', type: 'capture', owner: 'sdk', label: 'Capture', title: 'updatePosmEntry(...)', detail: 'SDK updates the record and resets syncStatus to pending so the change will be re-synced.', callback: 'onSuccess(PosmEntry)' },
+      { id: 'delete', type: 'capture', owner: 'sdk', label: 'Capture', title: 'deletePosmEntry(...)', detail: 'SDK removes the record locally and queues a delete for sync. If never synced, dropped from queue immediately.', callback: 'onSuccess()' },
+      { id: 'hasPending', type: 'sync', owner: 'sdk', label: 'Sync · Submit', title: 'hasPendingSyncData(...)', detail: 'SDK checks if any entries have syncStatus not synced. Host uses it to enable/disable submit.', callback: 'onSuccess(boolean)' },
+      { id: 'syncPending', type: 'sync', owner: 'sdk', label: 'Sync · Submit', title: 'syncPendingPosm(...)', detail: 'SDK runs 3-step engine: (1) upload image blobs to SAS storage, (2) call image-detect API, (3) POST updatePOSM. Exponential backoff retry.', callback: 'onSuccess() · onProgress(state) · onError(err)' },
+      { id: 'submitBtn', type: 'validate', owner: 'host', label: 'UI', title: 'User taps Submit', detail: 'Host shows the submit button and waits for the user confirmation tap before invoking the SDK.' },
+      { id: 'submit', type: 'sync', owner: 'sdk', label: 'Sync · Submit', title: 'submitPosmSession(...)', detail: 'SDK validates all entries synced, then marks the session complete on the server. Blocked if pending data exists.', callback: 'onSuccess() · onError(err)' },
+      { id: 'end', type: 'end', owner: 'host', title: 'SESSION COMPLETE', detail: 'Host navigates away to the next module. SDK has no further work for this session.' }
+    ],
+    userSteps: [
+      { id: 'open', type: 'start', title: 'Open outlet visit', detail: 'User starts a visit at the outlet from the app home screen.' },
+      { id: 'seeTask', type: 'screen', label: 'Screen', title: 'See "POSM Capture" task', detail: 'POSM appears as one of the tasks in the visit checklist. User taps to open it.', behind: 'initializeSDK · loadPosmMasterData' },
+      { id: 'prev', type: 'screen', label: 'Screen', title: 'See previous-visit POSM', detail: 'A "Last visit" section shows what POSM was found previously, so the user knows what to look for.', behind: 'getPreviousVisitPosm' },
+      { id: 'seeList', type: 'screen', label: 'Screen', title: 'See existing entries', detail: 'Any entries already captured in this session show in a list with thumbnail and sync status.', behind: 'getPosmEntries' },
+      { id: 'tapAdd', type: 'action', label: 'Action', title: 'Tap "Add POSM entry"', detail: 'User taps the add button to start capturing a new POSM material.' },
+      { id: 'fillForm', type: 'action', label: 'Action', title: 'Fill brand · visibility · element', detail: 'User picks POSM type (poster, dangler, shelf-strip), brand, visibility level, and element details.', behind: 'getBrandOptions · getVisibilityOptions' },
+      { id: 'shoot', type: 'action', label: 'Action', title: 'Tap shutter · photograph POSM', detail: 'Camera opens; user frames the POSM in store and takes a picture.', behind: 'capturePosmImage' },
+      { id: 'review', type: 'screen', label: 'Screen', title: 'Review photo · keep or retake', detail: 'A preview lets the user accept the photo or shoot it again.' },
+      { id: 'saved', type: 'feedback', label: 'Feedback', title: 'Entry appears · "pending sync"', detail: 'The new entry is added to the list and shows a small badge indicating it has not yet uploaded.', behind: 'createPosmEntry' },
+      { id: 'editOpt', type: 'action', label: 'Optional', title: 'Edit or swipe to delete', detail: 'User can correct a wrong brand, replace the photo, or remove any entry.', behind: 'updatePosmEntry · deletePosmEntry' },
+      { id: 'syncing', type: 'wait', label: 'Background', title: 'Sync indicator uploads', detail: 'Status updates as images upload, detect, and post. Works in background while user keeps capturing.', behind: 'syncPendingPosm (3-step engine)' },
+      { id: 'allSynced', type: 'feedback', label: 'Feedback', title: 'All entries "synced"', detail: 'Once everything is uploaded, pending badges clear. Submit button becomes enabled.', behind: 'hasPendingSyncData → false' },
+      { id: 'submit', type: 'action', label: 'Action', title: 'Tap "Submit POSM"', detail: 'User finalizes the section. Blocked if anything still pending.', behind: 'submitPosmSession' },
+      { id: 'done', type: 'end', title: 'POSM COMPLETE', detail: 'User returns to the visit checklist and moves to the next task.' }
+    ]
+  },
+
+  ocr: {
+    title: "OCR Stock SDK",
+    subtitle: "Function calls · Parameters · Return values · Callbacks",
+    userSubtitle: "User Flow — what the user sees and does",
+    steps: [
+      { id: 'start', type: 'start', owner: 'host', title: 'START', detail: 'Host shows the gate-pass capture screen. Pure lifecycle event.' },
+      { id: 'init', type: 'setup', owner: 'sdk', label: 'Setup', title: 'initialize(outletId, eventId)', detail: 'SDK loads persisted gate passes from local DB and resolves the attendance GUID from current or previous event.', callback: 'onInitialized(attendanceId, gatePasses)' },
+      { id: 'tapAdd', type: 'setup', owner: 'host', label: 'UI', title: 'User taps "Add gate pass"', detail: 'Host renders the add button and waits for the user gesture. SDK not involved until host invokes addGatePass.' },
+      { id: 'addPass', type: 'setup', owner: 'sdk', label: 'Setup', title: 'addGatePass() → GatePassData', detail: 'SDK creates a new gate-pass slot — returns GatePassData( gatePassId, syncStatus: synced ).', callback: 'onGatePassesUpdated([GatePassData])' },
+      { id: 'cameraUI', type: 'capture', owner: 'host', label: 'UI', title: 'Open camera · capture photo', detail: 'Host opens the camera, shows preview, captures the user shutter tap, hands the file to the SDK.' },
+      { id: 'upload', type: 'capture', owner: 'sdk', label: 'Image Capture', title: 'uploadOcrImage(file)', detail: 'SDK performs quality checks (blur, lighting) and returns OcrImage( imageUrl?, localPath?, isBlur, errors ).' },
+      { id: 'online1', type: 'decision', owner: 'sdk', question: 'ONLINE?', hint: 'SDK checks connectivity', branches: {
+        yes: [ { id: 'cloud', type: 'api', owner: 'sdk', label: 'YES path', title: 'Upload to Cloud', detail: 'SDK POSTs image to storage → OcrImage( imageUrl: "https://..." )' } ],
+        no:  [ { id: 'device', type: 'sync', owner: 'sdk', label: 'NO path', title: 'Save to Device', detail: 'SDK copies to app documents directory → OcrImage( localPath: "/..." )' } ]
+      }},
+      { id: 'saveImages', type: 'capture', owner: 'sdk', label: 'Image Capture', title: 'saveOcrImages(...)', detail: 'SDK persists the capture record. syncStatus = pendingOcr (online) or pendingUpload (offline).', callback: 'onGatePassUpdated(GatePassData)' },
+      { id: 'getOcr', type: 'ocr', owner: 'sdk', label: 'OCR', title: 'getOcrData(gatePassId)', detail: 'SDK returns cached result if available (within 1 hr), otherwise POSTs to OCR API.' },
+      { id: 'cached', type: 'decision', owner: 'sdk', question: 'RESULT CACHED?', hint: 'SDK checks cache age', branches: {
+        yes: [ { id: 'cachedRes', type: 'ocr', owner: 'sdk', label: 'YES path', title: 'Cached Result', detail: 'SDK returns stored OcrDataRes. No network call made.' } ],
+        no:  [ { id: 'apiCall', type: 'api', owner: 'sdk', label: 'NO path', title: 'OCR API Call', detail: 'SDK POSTs to /ocr/get-ocr-data · body: {imageUrl, ...} → OcrDataRes' } ]
+      }},
+      { id: 'classify', type: 'ocr', owner: 'sdk', label: 'OCR', title: 'classifyBrands(...)', detail: 'SDK runs fuzzy match locally: ≥ 70% → ub | known sub-brands → potentialUB | else → others.', callback: 'onBrandsClassified(Map)' },
+      { id: 'showResult', type: 'validate', owner: 'host', label: 'UI', title: 'Render OCR result · user reviews', detail: 'Host displays the classified rows and accepts user gestures: tap a brand, type a qty, fix a misread date. Each edit calls a small SDK function.' },
+      { id: 'editFns', type: 'validate', owner: 'sdk', label: 'Validate & Save', title: 'updateField · selectBrand · setQty', detail: 'For each edit, SDK mutates the in-memory OcrResult and persists it. Returns updated state synchronously.' },
+      { id: 'tapSave', type: 'validate', owner: 'host', label: 'UI', title: 'User taps Save', detail: 'Host shows the save button and waits for the user confirmation gesture before calling saveGatePass.' },
+      { id: 'save', type: 'validate', owner: 'sdk', label: 'Validate & Save', title: 'saveGatePass(guid)', detail: 'SDK validates: date format · all potentialUB brands assigned a SKU · no duplicate SKU ids.' },
+      { id: 'valid', type: 'decision', owner: 'sdk', question: 'VALID?', hint: 'SDK validates payload', branches: {
+        no: [ { id: 'fail', type: 'fail', owner: 'sdk', label: 'FAIL path', title: 'Result.failure(reason)', detail: 'Invalid date · Unclassified brands · Duplicate SKU ids. Host shows the message to the user.' } ],
+        yes: [
+          { id: 'online2', type: 'decision', owner: 'sdk', question: 'ONLINE?', hint: 'SDK checks connectivity', branches: {
+            yes: [ { id: 'post', type: 'api', owner: 'sdk', label: 'YES path', title: 'POST /ocr/updateOcrData', detail: 'SDK sends ?attendanceId=...&guid=... · body: OcrResult JSON → Result.success(OcrResult).' } ],
+            no:  [ { id: 'queue', type: 'sync', owner: 'sdk', label: 'NO path', title: 'Queue for Sync', detail: 'SDK stores locally · syncStatus: pendingSave → Result.success(OcrResult).' } ]
+          }}
+        ]
+      }},
+      { id: 'refresh', type: 'validate', owner: 'sdk', label: 'Validate & Save', title: 'Gate pass record refreshed', detail: 'SDK pushes updated state to host via callback. syncStatus: synced or pendingSave.', callback: 'onGatePassUpdated(GatePassData)' },
+      { id: 'end', type: 'end', owner: 'host', title: 'END', detail: 'Host navigates to the next gate pass or screen.' }
+    ],
+    userSteps: [
+      { id: 'open', type: 'start', title: 'Open outlet visit', detail: 'User begins a visit and lands on the OCR Stock task.' },
+      { id: 'seeTask', type: 'screen', label: 'Screen', title: 'See "Gate Pass" task', detail: 'The task lists any existing gate passes from this session, each with a thumbnail and status.', behind: 'initialize → onInitialized' },
+      { id: 'tapAdd', type: 'action', label: 'Action', title: 'Tap "Add gate pass"', detail: 'User starts a new gate-pass capture.', behind: 'addGatePass' },
+      { id: 'shoot', type: 'action', label: 'Action', title: 'Photograph gate pass paper', detail: 'Camera opens; user frames the printed gate-pass sheet and shoots. Multiple pages can be captured.', behind: 'uploadOcrImage → online/offline branch' },
+      { id: 'qualityBad', type: 'feedback', label: 'Feedback', title: 'Warning if blurry', detail: 'If image quality fails, user is prompted to retake before proceeding.', behind: 'isBlur flag from uploadOcrImage' },
+      { id: 'processing', type: 'wait', label: 'Wait', title: 'OCR extracts data', detail: 'A loading state shows while the OCR service reads the paper and extracts date, brands, quantities.', behind: 'getOcrData (cache check → API call)' },
+      { id: 'reviewData', type: 'screen', label: 'Screen', title: 'See extracted data', detail: 'Each row shows brand name, classified type (UB / potentialUB / others), and quantities. Confidence varies per row.', behind: 'classifyBrands → onBrandsClassified' },
+      { id: 'fixDate', type: 'action', label: 'Action', title: 'Fix the date', detail: 'User taps the date field and corrects it if misread.', behind: 'updateField' },
+      { id: 'pickBrand', type: 'action', label: 'Action', title: 'Pick SKU for potentialUB rows', detail: 'For each row flagged as potential, user picks the matching SKU from a dropdown.', behind: 'selectBrand · updateBrandName' },
+      { id: 'fixQty', type: 'action', label: 'Action', title: 'Edit wrong quantities', detail: 'User edits the qty fields directly inline.', behind: 'setQty' },
+      { id: 'tapSave', type: 'action', label: 'Action', title: 'Tap "Save"', detail: 'User submits the corrected gate pass.', behind: 'saveGatePass' },
+      { id: 'validation', type: 'feedback', label: 'Feedback', title: 'Error OR success', detail: 'Invalid date, unclassified brands, or duplicate SKU IDs show a clear error to fix. Otherwise the pass is saved.', behind: 'VALID? · Result.failure or success' },
+      { id: 'syncing', type: 'wait', label: 'Background', title: 'Upload or queue', detail: 'If online the pass is sent immediately. Offline it waits in the queue with a pending badge.', behind: 'POST /ocr/updateOcrData · Queue for Sync' },
+      { id: 'next', type: 'action', label: 'Action', title: 'Add another OR finish', detail: 'User can add more gate passes for the same visit, or move on.' },
+      { id: 'done', type: 'end', title: 'OCR COMPLETE', detail: 'Visit checklist updates; user proceeds to next task.' }
+    ]
+  },
+
+  ir: {
+    title: "IR (Image Recognition) SDK",
+    subtitle: "Hybrid-init · Offline-first · Callback-based · Multi-BLoC → Single SDK",
+    userSubtitle: "User Flow — what the user sees and does",
+    steps: [
+      { id: 'start', type: 'start', owner: 'host', title: 'START', detail: 'Host launches the IR module screen. Pure lifecycle event.' },
+      { id: 'init', type: 'setup', owner: 'sdk', label: 'Initialization', title: 'initializeSDK(baseUrl, apiKey)', detail: 'SDK stores REST base URL and auth API key. Called once at app startup.' },
+      { id: 'loadMaster', type: 'setup', owner: 'sdk', label: 'Session · Data', title: 'loadIRMasterData(...)', detail: 'SDK fetches IR master config (categories, KPIs, weightages, planograms, asset configs) and caches it locally.', callback: 'onSuccess(masterData)' },
+      { id: 'getResponses', type: 'setup', owner: 'sdk', label: 'Session · Data', title: 'getIRResponses · getAssetResponses', detail: 'SDK reads existing IR responses and asset captures from local DB.', callback: 'onSuccess([IRResponse])' },
+      { id: 'isIR', type: 'validate', owner: 'sdk', label: 'Validation', title: 'isIROutlet(outletId)', detail: 'SDK checks outlet config and returns true/false. Host uses it to gate the rest of the flow.', callback: 'onSuccess(boolean)' },
+      { id: 'cameraUI', type: 'capture', owner: 'host', label: 'UI', title: 'Open camera · multi-facing capture', detail: 'Host opens the device camera with framing guides for the asset, captures shutter taps for each facing (front/left/right).' },
+      { id: 'capture', type: 'capture', owner: 'sdk', label: 'Capture', title: 'captureImage · captureMultiFacing', detail: 'SDK runs each captured image through the pipeline: upload → quality → liveness → detect.', callback: 'onSuccess(imageRef) · onProgress(pipelineState)' },
+      { id: 'checkFailed', type: 'validate', owner: 'sdk', label: 'Validation', title: 'checkFailedImages · checkPendingAfterImages', detail: 'SDK returns images that failed quality / detect. Host renders re-capture prompts for the user.', callback: 'onSuccess([FailedImage])' },
+      { id: 'loadCats', type: 'ocr', owner: 'sdk', label: 'Results · KPIs', title: 'loadCategories · getKpiWeightage', detail: 'SDK returns result categories and KPI weightages from master data so the host can render a breakdown.' },
+      { id: 'getScore', type: 'ocr', owner: 'sdk', label: 'Results · KPIs', title: 'getComplianceScore · checkKpiCompliance', detail: 'SDK KPI engine computes per-KPI compliance against thresholds and aggregates into an overall score.', callback: 'onSuccess(complianceData)' },
+      { id: 'showScore', type: 'capture', owner: 'host', label: 'UI', title: 'Render score breakdown', detail: 'Host displays the compliance score, per-KPI rows, and ideal-vs-actual image comparison. Pure rendering.' },
+      { id: 'planogram', type: 'capture', owner: 'sdk', label: 'Planogram', title: 'getPlanogramData · getIdealPlanogramImageUrl', detail: 'SDK returns target layout, per-facing config, and ideal-image URL. Host shows it next to the user capture.', callback: 'onComplete(url) · onError(err)' },
+      { id: 'assetUI', type: 'capture', owner: 'host', label: 'UI', title: 'User captures asset photo', detail: 'Host opens the asset-tracking camera for the user. The shutter tap and framing are host-driven.' },
+      { id: 'asset', type: 'capture', owner: 'sdk', label: 'Asset Tracking', title: 'initAssetTracking · captureAssetImage', detail: 'SDK runs fill-rate · purity · QR · condition checks against the captured asset image.', callback: 'onSuccess(AssetResult)' },
+      { id: 'pickSkip', type: 'validate', owner: 'host', label: 'UI', title: 'User picks skip reason', detail: 'If capture is impossible (asset blocked, missing), host shows a reason picker and waits for selection.' },
+      { id: 'skip', type: 'validate', owner: 'sdk', label: 'Skip Reason', title: 'getSkipReasons · submitSkipReason', detail: 'SDK provides the reason list from master data and records the skip event as a completion with metadata.', callback: 'onSuccess()' },
+      { id: 'proceed', type: 'validate', owner: 'sdk', label: 'Validation', title: 'checkCanProceed(...)', detail: 'SDK returns true only if all required captures are complete or validly skipped.', callback: 'onSuccess(boolean)' },
+      { id: 'hasPending', type: 'sync', owner: 'sdk', label: 'Sync', title: 'hasPendingSync(...)', detail: 'SDK reports whether any images are still in {pending, draft, uploading, fail}.', callback: 'onSuccess(boolean)' },
+      { id: 'sync', type: 'sync', owner: 'sdk', label: 'Sync', title: 'syncPendingImages(...)', detail: 'SDK drains the offline queue — uploads via SAS token, calls IR detect, posts compliance results. Exponential backoff on failure.', callback: 'onSuccess() · onProgress(state) · onError(err)' },
+      { id: 'end', type: 'end', owner: 'host', title: 'SESSION COMPLETE', detail: 'Host navigates away. SDK has delivered the compliance score and asset results.' }
+    ],
+    userSteps: [
+      { id: 'open', type: 'start', title: 'Open outlet visit', detail: 'User begins the visit and navigates to the IR task.' },
+      { id: 'checkOutlet', type: 'screen', label: 'Screen', title: 'See IR task (if enabled)', detail: 'If this outlet is not IR-enabled, the task is hidden and user skips ahead.', behind: 'isIROutlet check' },
+      { id: 'seeMaster', type: 'screen', label: 'Screen', title: 'See assets/shelves to capture', detail: 'A list of assets (shelves, racks, coolers) for this outlet — each shows status, ideal image, and required facings.', behind: 'loadIRMasterData · getIRResponses' },
+      { id: 'idealRef', type: 'screen', label: 'Screen', title: 'View ideal planogram', detail: 'User can tap any asset to see the reference layout — how the shelf should look.', behind: 'getIdealPlanogramImageUrl' },
+      { id: 'startCapture', type: 'action', label: 'Action', title: 'Tap asset · start capture', detail: 'User selects an asset and the camera opens with framing guides.' },
+      { id: 'shoot', type: 'action', label: 'Action', title: 'Take photos · multi-facing', detail: 'For multi-facing assets the camera prompts for each angle in turn (front/left/right).', behind: 'captureImage · captureMultiFacing' },
+      { id: 'pipeline', type: 'wait', label: 'Wait', title: 'Quality → liveness → detect', detail: 'A progress indicator shows each pipeline stage. Takes a few seconds per image.', behind: 'onProgress(pipelineState)' },
+      { id: 'retake', type: 'feedback', label: 'Feedback', title: 'Re-take failed images', detail: 'If quality or detection failed, those images are flagged and user re-captures them.', behind: 'checkFailedImages' },
+      { id: 'assetShoot', type: 'action', label: 'Action', title: 'Capture asset photos', detail: 'For tracked assets user captures additional photos for fill-rate, purity, QR scan, and condition checks.', behind: 'initAssetTracking · captureAssetImage' },
+      { id: 'skipFlow', type: 'action', label: 'If blocked', title: 'Pick skip reason', detail: 'If the asset is missing or blocked, user picks a reason ("removed", "obstructed") instead of capturing.', behind: 'getSkipReasons · submitSkipReason' },
+      { id: 'seeScore', type: 'screen', label: 'Screen', title: 'See compliance score', detail: 'A composite score plus per-KPI breakdown (share-of-shelf, planogram match, etc.) shown to the user.', behind: 'getComplianceScore · checkKpiCompliance' },
+      { id: 'compare', type: 'screen', label: 'Screen', title: 'Compare ideal vs actual', detail: 'Side-by-side view of the target layout and the user capture, with highlighted differences.', behind: 'getPlanogramData · getFacingConfigs' },
+      { id: 'gate', type: 'feedback', label: 'Feedback', title: 'Submit enables when done', detail: 'If anything is still pending (un-captured, failed, queued), submit stays disabled.', behind: 'checkCanProceed · hasPendingSync' },
+      { id: 'syncing', type: 'wait', label: 'Background', title: 'Background sync', detail: 'Offline images queue; once back online they drain automatically with retries.', behind: 'syncPendingImages' },
+      { id: 'done', type: 'end', title: 'IR COMPLETE', detail: 'User returns to the visit checklist with score recorded.' }
+    ]
+  }
+};
+
+const container = {
+  posm: document.getElementById('flow-posm'),
+  ocr: document.getElementById('flow-ocr'),
+  ir: document.getElementById('flow-ir')
+};
+
+let currentView = 'sdk';
+
+function ownerBadge(owner) {
+  if (owner === 'host') return '<span class="badge host">Host</span>';
+  if (owner === 'sdk')  return '<span class="badge sdk">SDK</span>';
+  return '';
+}
+
+function buildNode(step) {
+  if (step.type === 'decision') return buildDecision(step);
+
+  const node = document.createElement('div');
+  node.className = 'node flow-item';
+  node.dataset.type = step.type;
+  node.dataset.id = step.id;
+
+  const card = document.createElement('div');
+  card.className = 'node-card';
+
+  let header = '<div class="node-header"><div>';
+  if (step.label) header += '<span class="node-label">' + step.label + '</span>';
+  header += '</div><div style="display:flex;gap:4px;align-items:center;flex-wrap:wrap;">';
+  if (step.owner) header += ownerBadge(step.owner);
+  if (step.callback) header += '<span class="returns-pill">returns</span>';
+  header += '</div></div>';
+
+  let html = header;
+  html += '<div class="node-title">' + step.title + '<span class="click-hint">▾</span></div>';
+  html += '<div class="node-detail">' + (step.detail || '');
+  if (step.callback) html += '<div class="callback-tag">' + step.callback + '</div>';
+  if (step.behind) html += '<div class="behind-the-scenes">' + step.behind + '</div>';
+  html += '</div>';
+  card.innerHTML = html;
+
+  node.appendChild(card);
+  return node;
+}
+
+function buildDecision(step) {
+  const wrap = document.createElement('div');
+  wrap.className = 'decision-group flow-item';
+  wrap.style.display = 'flex';
+  wrap.style.flexDirection = 'column';
+  wrap.style.gap = '12px';
+
+  const decision = document.createElement('div');
+  decision.className = 'decision';
+  decision.dataset.id = step.id;
+
+  const card = document.createElement('div');
+  card.className = 'decision-card';
+  card.innerHTML = '<div class="q">' + step.question + '</div><div class="hint">' + (step.hint || '') + '</div>' + ownerBadge(step.owner || 'sdk');
+  decision.appendChild(card);
+  wrap.appendChild(decision);
+
+  const branchesWrap = document.createElement('div');
+  branchesWrap.className = 'branches-wrap';
+
+  ['yes', 'no'].forEach(side => {
+    if (!step.branches[side]) return;
+    const branch = document.createElement('div');
+    branch.className = 'branch ' + side;
+
+    const labelWrap = document.createElement('div');
+    labelWrap.className = 'branch-label-wrap';
+    labelWrap.innerHTML = '<span class="branch-label">' + side.toUpperCase() + '</span>';
+    branch.appendChild(labelWrap);
+
+    step.branches[side].forEach((child, i) => {
+      if (i > 0) {
+        const conn = document.createElement('div');
+        conn.className = 'connector visible';
+        branch.appendChild(conn);
+      }
+      const childEl = buildNode(child);
+      childEl.classList.add('visible');
+      branch.appendChild(childEl);
+    });
+
+    branchesWrap.appendChild(branch);
+  });
+
+  wrap.appendChild(branchesWrap);
+  wrap._decisionEl = decision;
+  wrap._branchesWrap = branchesWrap;
+  return wrap;
+}
+
+function getStepsPerRow() {
+  const scroller = document.querySelector('.flow-scroll');
+  const avail = scroller ? scroller.clientWidth - 60 : window.innerWidth - 320;
+  const cardW = 240, gap = 30;
+  return Math.max(2, Math.floor((avail + gap) / (cardW + gap)));
+}
+
+function makeTurnSvg(side) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('viewBox', '0 0 60 80');
+  const path = document.createElementNS(ns, 'path');
+  const stroke = 'rgba(148, 163, 184, 0.7)';
+  if (side === 'right') {
+    path.setAttribute('d', 'M 0 0 H 50 a 8 8 0 0 1 8 8 V 72 a 8 8 0 0 1 -8 8 H 0');
+  } else {
+    path.setAttribute('d', 'M 60 0 H 10 a 8 8 0 0 0 -8 8 V 72 a 8 8 0 0 0 8 8 H 60');
+  }
+  path.setAttribute('fill', 'none');
+  path.setAttribute('stroke', stroke);
+  path.setAttribute('stroke-width', '2');
+  svg.appendChild(path);
+  const tri = document.createElementNS(ns, 'polygon');
+  if (side === 'right') {
+    tri.setAttribute('points', '8,76 -2,80 8,84');
+  } else {
+    tri.setAttribute('points', '52,76 62,80 52,84');
+  }
+  tri.setAttribute('fill', stroke);
+  svg.appendChild(tri);
+  return svg;
+}
+
+function renderFlow(key) {
+  const flow = flows[key];
+  const root = container[key];
+  root.innerHTML = '';
+
+  const stepList = currentView === 'user' ? (flow.userSteps || flow.steps) : flow.steps;
+  const perRow = getStepsPerRow();
+
+  let row = null;
+  let rowIdx = 0;
+  stepList.forEach((step, i) => {
+    if (i % perRow === 0) {
+      if (i > 0) {
+        const turn = document.createElement('div');
+        const finishedWasLtr = ((rowIdx - 1) % 2 === 0);
+        turn.className = 'row-turn ' + (finishedWasLtr ? 'right' : 'left');
+        turn.appendChild(makeTurnSvg(finishedWasLtr ? 'right' : 'left'));
+        root.appendChild(turn);
+      }
+      row = document.createElement('div');
+      const isRtl = rowIdx % 2 === 1;
+      row.className = 'flow-row ' + (isRtl ? 'rtl' : 'ltr');
+      root.appendChild(row);
+      rowIdx++;
+    }
+    const el = buildNode(step);
+    row.appendChild(el);
+  });
+
+  const firstFlowItem = root.querySelector('.flow-item');
+  if (firstFlowItem) {
+    firstFlowItem.classList.add('visible');
+    if (firstFlowItem.classList.contains('decision-group')) {
+      firstFlowItem._decisionEl.classList.add('visible');
+    }
+  }
+
+  attachHandlers(root);
+  updateActiveHeader();
+  updateProgress();
+}
+
+function attachHandlers(root) {
+  root.querySelectorAll('.node').forEach(node => {
+    const card = node.querySelector('.node-card');
+    card.addEventListener('click', () => {
+      card.classList.toggle('expanded');
+      revealNext(node);
+      updateProgress();
+    });
+  });
+  root.querySelectorAll('.decision-group').forEach(group => {
+    const decision = group._decisionEl;
+    const branches = group._branchesWrap;
+    decision.querySelector('.decision-card').addEventListener('click', () => {
+      branches.classList.toggle('visible');
+      revealNext(group);
+      updateProgress();
+    });
+  });
+}
+
+function revealNext(currentItem) {
+  let sib = currentItem.nextElementSibling;
+  while (sib && !sib.classList.contains('flow-item')) sib = sib.nextElementSibling;
+
+  if (!sib) {
+    const row = currentItem.closest('.flow-row');
+    if (row) {
+      let walker = row.nextElementSibling;
+      while (walker && !walker.classList.contains('flow-row')) {
+        if (walker.classList.contains('row-turn')) walker.classList.add('visible');
+        walker = walker.nextElementSibling;
+      }
+      if (walker) sib = walker.querySelector('.flow-item');
+    }
+  }
+
+  if (!sib) return;
+  sib.classList.add('visible');
+  if (sib.classList.contains('decision-group')) sib._decisionEl.classList.add('visible');
+  scrollIntoFlowView(sib);
+}
+
+function scrollIntoFlowView(el) {
+  const scroller = document.querySelector('.flow-scroll');
+  if (!scroller || !el) return;
+  requestAnimationFrame(() => {
+    const elRect = el.getBoundingClientRect();
+    const scRect = scroller.getBoundingClientRect();
+    let dx = 0, dy = 0;
+    const margin = 40;
+    if (elRect.bottom > scRect.bottom - margin) dy = elRect.bottom - scRect.bottom + margin;
+    else if (elRect.top < scRect.top + margin) dy = elRect.top - scRect.top - margin;
+    if (elRect.right > scRect.right - margin) dx = elRect.right - scRect.right + margin;
+    else if (elRect.left < scRect.left + margin) dx = elRect.left - scRect.left - margin;
+    if (Math.abs(dx) > 4 || Math.abs(dy) > 4) {
+      scroller.scrollBy({ left: dx, top: dy, behavior: 'smooth' });
+    }
+  });
+}
+
+function updateProgress() {
+  const active = document.querySelector('.module.active').dataset.flow;
+  const root = container[active];
+  const totalNodes = root.querySelectorAll('.node').length;
+  const totalDecisions = root.querySelectorAll('.decision').length;
+  const total = totalNodes + totalDecisions;
+  let visible = 0;
+  root.querySelectorAll('.node').forEach(n => {
+    const wrap = n.closest('.branches-wrap');
+    if (wrap && !wrap.classList.contains('visible')) return;
+    if (n.classList.contains('visible')) visible++;
+  });
+  root.querySelectorAll('.decision').forEach(d => {
+    if (d.classList.contains('visible')) visible++;
+  });
+  document.getElementById('progress').textContent = visible + ' / ' + total + ' revealed';
+}
+
+function updateActiveHeader() {
+  const active = document.querySelector('.module.active').dataset.flow;
+  const flow = flows[active];
+  document.getElementById('active-title').textContent = flow.title;
+  document.getElementById('active-subtitle').textContent = currentView === 'user' ? flow.userSubtitle : flow.subtitle;
+}
+
+function resetScroll() {
+  const scroller = document.querySelector('.flow-scroll');
+  if (scroller) scroller.scrollTo({ left: 0, top: 0, behavior: 'smooth' });
+}
+
+document.querySelectorAll('.module').forEach(mod => {
+  mod.addEventListener('click', () => {
+    document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+    mod.classList.add('active');
+    document.querySelectorAll('.flow').forEach(f => f.classList.remove('active'));
+    document.getElementById('flow-' + mod.dataset.flow).classList.add('active');
+    updateActiveHeader();
+    updateProgress();
+    resetScroll();
+  });
+});
+
+document.querySelectorAll('.view-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.view-toggle button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentView = btn.dataset.view;
+    ['posm', 'ocr', 'ir'].forEach(renderFlow);
+    resetScroll();
+  });
+});
+
+document.getElementById('expand-all').addEventListener('click', () => {
+  const active = document.querySelector('.module.active').dataset.flow;
+  const root = container[active];
+  root.querySelectorAll('.flow-item, .node, .decision, .row-turn').forEach(n => n.classList.add('visible'));
+  root.querySelectorAll('.branches-wrap').forEach(b => b.classList.add('visible'));
+  root.querySelectorAll('.node-card').forEach(c => c.classList.add('expanded'));
+  updateProgress();
+  resetScroll();
+});
+
+document.getElementById('reset').addEventListener('click', () => {
+  const active = document.querySelector('.module.active').dataset.flow;
+  renderFlow(active);
+  resetScroll();
+});
+
+let resizeTimer = null;
+let lastPerRow = null;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    const perRow = getStepsPerRow();
+    if (perRow !== lastPerRow) {
+      lastPerRow = perRow;
+      ['posm', 'ocr', 'ir'].forEach(renderFlow);
+    }
+  }, 180);
+});
+
+['posm', 'ocr', 'ir'].forEach(key => {
+  renderFlow(key);
+  const sdkCount = flows[key].steps.length;
+  const el = document.getElementById('count-' + key);
+  if (el) el.textContent = sdkCount + ' steps';
+});
+lastPerRow = getStepsPerRow();
+
+updateActiveHeader();
+updateProgress();
+</script>
+</body>
+</html>
